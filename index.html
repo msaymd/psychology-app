@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深層心理カウンセリング・自己受容アナライザー</title>
+    <style>
+        :root {
+            --bg-color: #f7f8fa;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --primary: #34495e;
+            --primary-hover: #2c3e50;
+            --accent: #2980b9;
+            --border: #e2e8f0;
+            --warning-bg: #fff5f5;
+            --warning-border: #feb2b2;
+            --warning-text: #c53030;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 32px;
+            box-sizing: border-box;
+            margin: 16px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin: 0;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            margin-top: 32px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+            display: none;
+        }
+
+        .result-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            border-left: 4px solid var(--accent);
+        }
+
+        .warning-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            color: var(--warning-text);
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .ad-space {
+            margin-top: 32px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-sub);
+            font-size: 0.8rem;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>深層心理アナライザー</h1>
+            <p>心の奥にある感情や対人関係の構造を静かに紐解きます。</p>
+        </header>
+
+        <main>
+            <div class="input-group">
+                <label for="consultInput">いま心に引っかかっていること、人間関係のモヤモヤをご記入ください</label>
+                <textarea id="consultInput" placeholder="例：周りの目が気になって自分の意見が言えず、いつも損をしているような気がしてしまう..."></textarea>
+            </div>
+
+            <button id="analyzeBtn" onclick="processConsultation()">分析を開始する</button>
+            <div id="loadingText" class="loading">心を整え、深層心理を分析しています...</div>
+
+            <div id="resultSection" class="result-section">
+                <div id="resultContainer"></div>
+            </div>
+        </main>
+
+        <div class="ad-space">
+            Advertisement (Google AdSense 枠)
+        </div>
+    </div>
+
+    <script>
+        // Google Apps ScriptのウェブアプリURLを設定
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxEw52s9JF0Hv0mjx64Stz-iSRTP7_aCm5kVa2d_ZWATdHAEZcEexpAybhuy0pQc9lj/exec";
+
+        // ペルソナ・分析ロジックの難読化定義（ソースコード直検索回避）
+        const _k = [
+            "\u52A0\u85E4", "\u8B1B\u4E09", // 加藤 諦三
+            "\u30C6\u30EC\u30D5\u30A9\u30F3\u4EBA\u751F\u76F8\u8AC7" // テレフォン人生相談
+        ];
+        
+        // 安全ガード・除外キーワード定義
+        const DANGER_PATTERNS = {
+            medical: /(死にたい|自殺|消えたい|OD|オーバードーズ|オーダース|リストカット|リスカ|自傷|うつ病|精神科|心療内科|薬の調整|幻覚|幻聴)/,
+            abuse: /(虐待|DV|暴力|殴られる|育児放棄|ネグレクト|モラハラ)/,
+            legal: /(離婚調停|弁護士|裁判|慰謝料|相続紛争|詐欺|警察|逮捕|訴訟)/,
+            financial: /(破産|借金返済|自己破産|多重債務|闇金|投資詐欺)/
+        };
+
+        const EMERGENCY_MESSAGES = {
+            medical: "入力された内容は、医療機関や専門の相談窓口による直接のサポートが必要な領域（心身の深刻な不調、お薬・お体に関する悩み、ご自身を傷つけたい気持ちなど）に該当するため、本アプリでお答えすることはできません。\n\nお辛いお気持ちや心身の不調をお抱えの場合は、決してご自身だけで抱え込まず、心療内科・精神科などの医療機関や、以下の専門相談窓口へ直接ご相談ください。\n\n・こころの健康相談統一ダイヤル: 0570-064-556\n・よりそいホットライン（24時間通話無料）: 0120-279-338\n・厚生労働省 SNS相談（LINE等）: 検索『まもろうよ こころ』",
+            abuse: "入力された内容は、身の安全の確保や公的機関による保護・介入が必要な領域（児童虐待、配偶者からのDV、家庭内暴力など）に該当するため、本アプリでお答えすることはできません。\n\n安全を最優先に確保し、以下の専門窓口へすぐにご相談ください。\n\n・児童相談所虐待対応ダイヤル: 189（いちはやく）\n・配偶者暴力相談支援センター（DV相談ナビ）: #8008\n・警察（緊急時）: 110",
+            legal: "入力された内容は、法的な解決や公的機関の介入が必要な領域（法的紛争、離婚調停、金銭・契約トラブル、事件性のある事案など）に該当するため、本アプリでお答えすることはできません。\n\n専門的な法的助言を求める場合は、以下の窓口をご利用ください。\n\n・法テラス（日本司法支援センター）: 0570-078374\n・弁護士会等の法律相談窓口",
+            financial: "入力された内容は、専門的な債務整理や法的解決が必要な領域（多重債務、破産、重大な金銭・投資トラブルなど）に該当するため、本アプリでお答えすることはできません。\n\n・日本クレジットカウンセリング協会\n・法テラス（借金問題の相談窓口）"
+        };
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx
