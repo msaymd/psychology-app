@@ -210,7 +210,7 @@
 
     <script>
         // Google Apps ScriptのウェブアプリURL
-        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzNDRlATi9kxP4GQXKyEjgpLZqBlZTDiW4nr1u05pE-VP7MoHBwhQ41q8DGMl3Xml2U/exec";
+        const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbz9_Y_Qt3hLD0OgKhAejuYILMQ_v_hhsEQiZsZku8mQnersIoMeAlhYMG30XWF0B6LlNg/exec";
 
         // ==========================================
         // プロンプト生成モジュール
@@ -304,40 +304,41 @@
         }
 
         // ==========================================
-        // Gemini API 呼び出し
+        // Gemini API 呼び出し（GAS中継版）
         // ==========================================
-        async function callGeminiAPI(prompt, systemInstruction) {
-            const apiKey = "AIzaSyBNUBy7ezxcw8mYSC0L9Z3OlPGyQ8XLcn8"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemInstruction }] }
-            };
-
+        async function requestAnalysisViaGAS(prompt, systemInstruction, category) {
             let retries = 3;
             let delay = 1000;
 
             while (retries > 0) {
                 try {
-                    const response = await fetch(apiUrl, {
+                    const response = await fetch(GAS_WEBAPP_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            action: "analyze",
+                            category: category,
+                            userMessage: prompt,
+                            systemInstruction: systemInstruction
+                        })
                     });
 
                     if (response.ok) {
-                        const data = await response.json();
-                        return data.candidates?.[0]?.content?.parts?.[0]?.text || "回答の生成に失敗しました。";
+                        const result = await response.json();
+                        if (result.status === "success") {
+                            return result.aiResponse;
+                        } else {
+                            throw new Error(result.message || "サーバー側でエラーが発生しました。");
+                        }
                     }
                 } catch (e) {
-                    // Backoff retry
+                    // リトライ待機
                 }
                 await new Promise(res => setTimeout(res, delay));
                 delay *= 2;
                 retries--;
             }
-            throw new Error("API通信エラーが発生しました。");
+            throw new Error("サーバーとの通信に失敗しました。時間をおいて再度お試しください。");
         }
 
         // ==========================================
@@ -375,7 +376,7 @@
                     return;
                 }
 
-                // 2. 分析処理開始
+               // 2. 分析処理開始
                 loadingState.classList.remove('hidden');
                 btnAnalyze.disabled = true;
 
@@ -383,14 +384,12 @@
                     const systemPersona = getPersonaEngine();
                     const fullPrompt = `相談者からの入力テキスト:\n「${text}」\n\n上記テキストを分析し、相談者が抱える「無意識の甘え」「抑圧された敵意」「現実への無受容」を鋭く指摘した上で、自己受容に至るアドバイスを作成しなさい。なお、もし文章が短すぎて背景事情が極めて不明確な場合は、最初に深掘りするための問いかけを1〜2点添えなさい。`;
 
-                    const responseText = await callGeminiAPI(fullPrompt, systemPersona);
+                    // GAS経由で安全に分析を実行（同時にスプレッドシートへのログ保存もGAS側で完結します）
+                    const responseText = await requestAnalysisViaGAS(fullPrompt, systemPersona, "通常分析");
 
                     // Markdown レンダリング
                     resultContent.innerHTML = marked.parse(responseText);
                     resultCard.classList.remove('hidden');
-
-                    // 3. スプレッドシートログへバックグラウンド送信
-                    sendLogToSheet("通常分析", text, responseText);
 
                 } catch (err) {
                     alert(err.message || "分析中にエラーが発生しました。");
